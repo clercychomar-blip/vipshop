@@ -126,12 +126,20 @@ const PaypalSimModal: FC<PaypalSimModalProps> = ({ open, onClose, video }) => {
       borderRadius: '8px',
       fontSize: '0.97rem',
       background: '#f5f8fb',
+      color: '#2c2e2f',
       '& fieldset': { borderColor: '#c4cdd5' },
       '&:hover fieldset': { borderColor: '#0070ba' },
       '&.Mui-focused fieldset': { borderColor: '#0070ba', borderWidth: '2px' },
       '&.Mui-focused': { background: '#fff' },
     },
-    '& input': { py: 1.6, px: 1.8 },
+    '& input': {
+      py: 1.6,
+      px: 1.8,
+      color: '#2c2e2f',
+      caretColor: '#0070ba',
+      '&::placeholder': { color: '#9aa0a6', opacity: 1 },
+    },
+    '& .MuiInputLabel-root': { color: '#6c7378' },
   };
 
   const showFooter = ['email', 'email_loading', 'password', 'card'].includes(simStep);
