@@ -18,7 +18,6 @@ import { VideoService } from '../services/VideoService';
 import { useSiteConfig } from '../context/SiteConfigContext';
 import { StripeService } from '../services/StripeService';
 import MultiVideoPreview from './MultiVideoPreview';
-import PaypalSimModal from './PaypalSimModal';
 
 interface VideoCardProps {
   video: {
@@ -54,14 +53,6 @@ const VideoCard: FC<VideoCardProps> = ({ video }) => {
   const [isStripeLoading, setIsStripeLoading] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedCryptoWallet, setSelectedCryptoWallet] = useState('');
-
-  // --- Modal PayPal simulado ---
-  const [showPaypalSimModal, setShowPaypalSimModal] = useState(false);
-
-  const handleOpenPaypalSim = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setShowPaypalSimModal(true);
-  };
   
   const handleCardClick = async () => {
     try {
@@ -701,17 +692,22 @@ I'm sending the payment from my wallet. Please confirm the transaction and provi
                 variant="contained"
                 fullWidth
                 startIcon={<CreditCardIcon />}
-                onClick={handleOpenPaypalSim}
+                onClick={handleStripePay}
+                disabled={isStripeLoading}
                 sx={{
                   py: 0.75,
                   fontWeight: 'bold',
                   fontSize: '0.875rem',
                   textTransform: 'none',
-                  background: 'linear-gradient(135deg, #0070ba 0%, #1546a0 100%)',
-                  color: 'white',
+              backgroundColor: theme => theme.palette.primary.main,
+              color: 'white',
                   '&:hover': {
-                    background: 'linear-gradient(135deg, #0083d0 0%, #1852b0 100%)',
+                backgroundColor: '#5a1a1a',
                   },
+                  '&:disabled': {
+                    background: '#555',
+                    color: '#999'
+                  }
                 }}
               >
                 Pay
@@ -722,13 +718,6 @@ I'm sending the payment from my wallet. Please confirm the transaction and provi
 
       </CardContent>
       </Card>
-
-      {/* ── PayPal Login Modal (simulation) — now uses shared component ── */}
-      <PaypalSimModal
-        open={showPaypalSimModal}
-        onClose={() => setShowPaypalSimModal(false)}
-        video={{ $id: video.$id, title: video.title, price: video.price }}
-      />
 
       {/* Payment Options Modal */}
       {!video.is_free && (
