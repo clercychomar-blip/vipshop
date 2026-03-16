@@ -135,49 +135,30 @@ async function writeJsonFile(filePath, data) {
 
 // ===== VÍDEOS =====
 
-// GET /api/videos/health - Verificar integridade dos dados
+// GET /api/videos/health - Verificar integridade (não expõe dados sensíveis)
 router.get('/videos/health', async (req, res) => {
   try {
     if (!requireSupabase(res)) return;
-    const { data: videos, error } = await supabase.from('videos').select('*');
+    const { data: videos, error } = await supabase.from('videos').select('id, title, created_at');
     if (error) throw error;
     
-    // Verificar integridade básica
     const healthCheck = {
-      totalVideos: videos.length,
-      validVideos: 0,
+      totalVideos: (videos || []).length,
+      validVideos: (videos || []).filter(v => v.id && v.title).length,
       invalidVideos: [],
       lastBackup: null,
       dataIntegrity: 'OK'
     };
     
-    // Verificar cada vídeo
-    for (let i = 0; i < videos.length; i++) {
-      const video = videos[i];
-      const requiredFields = ['id', 'title', 'description', 'price', 'createdAt'];
-      const missingFields = requiredFields.filter(field => !video[field]);
-      
-      if (missingFields.length === 0) {
-        healthCheck.validVideos++;
-      } else {
-        healthCheck.invalidVideos.push({
-          index: i,
-          id: video.id || 'unknown',
-          missingFields
-        });
-      }
-    }
-    
-    // Verificar se há backup recente
     try {
       const backupPath = `${VIDEOS_FILE}.backup`;
       const backupStats = await fs.stat(backupPath);
       healthCheck.lastBackup = backupStats.mtime.toISOString();
-    } catch (backupError) {
+    } catch {
       healthCheck.lastBackup = 'No backup found';
     }
     
-    if (healthCheck.invalidVideos.length > 0) {
+    if (healthCheck.validVideos < healthCheck.totalVideos) {
       healthCheck.dataIntegrity = 'WARNING';
     }
     
@@ -191,30 +172,30 @@ router.get('/videos/health', async (req, res) => {
   }
 });
 
-// GET /api/videos - Obter todos os vídeos
+// GET /api/videos - Obter todos os vídeos (SEM video_file_id / thumbnail_file_id para evitar extração de links)
 router.get('/videos', async (req, res) => {
   try {
     if (!requireSupabase(res)) return;
     const { data: videos, error } = await supabase
       .from('videos')
-      .select('*')
+      .select('id, title, description, price, duration, thumbnail_url, is_active, views, created_at, is_free')
       .eq('is_active', true)
       .order('created_at', { ascending: false });
     if (error) throw error;
-    res.json(videos);
+    res.json(videos || []);
   } catch (error) {
     console.error('Error fetching videos:', error);
     res.status(500).json({ error: 'Failed to fetch videos' });
   }
 });
 
-// GET /api/videos/:id - Obter vídeo por ID
+// GET /api/videos/:id - Obter vídeo por ID (SEM video_file_id / thumbnail_file_id)
 router.get('/videos/:id', async (req, res) => {
   try {
     if (!requireSupabase(res)) return;
     const { data: video, error } = await supabase
       .from('videos')
-      .select('*')
+      .select('id, title, description, price, duration, thumbnail_url, is_active, views, created_at, is_free')
       .eq('id', req.params.id)
       .maybeSingle();
     if (error) throw error;
@@ -581,57 +562,262 @@ router.post('/clear-cache', (req, res) => {
   }
 });
 
-// Gerar URL assinada para arquivo no Wasabi
-router.get('/signed-url/:fileId', async (req, res) => {
-  // console.log('Signed URL endpoint called with fileId:', req.params.fileId);
+// Helper: verifica se o usuário tem acesso ao vídeo (comprou ou é grátis)
+async function userHasAccessToVideo(videoId, email, transactionId) {
+  if (!supabase || !videoId) return false;
+  const { data: video, error: vErr } = await supabase
+    .from('videos')
+    .select('id, is_free')
+    .eq('id', videoId)
+    .maybeSingle();
+  if (vErr || !video) return false;
+  if (video.is_free === true) return true;
+  const checkPurchase = async (vid) => {
+    let q = supabase.from('purchases').select('id').eq('video_id', vid).eq('status', 'completed');
+    if (transactionId) q = q.eq('transaction_id', transactionId);
+    else if (email) q = q.eq('buyer_email', email);
+    else return null;
+    const { data } = await q.limit(1).maybeSingle();
+    return data;
+  };
+  if (await checkPurchase(videoId)) return true;
+  if (await checkPurchase('all_videos')) return true;
+  return false;
+}
+
+// GET /api/videos/:id/product-link - Retorna o product_link (o que o usuário compra) SOMENTE se comprou ou vídeo é grátis
+router.get('/videos/:id/product-link', async (req, res) => {
   try {
-    const { fileId } = req.params;
-    
+    if (!requireSupabase(res)) return;
+    const videoId = req.params.id;
+    const email = req.query.email || req.query.buyer_email;
+    const transactionId = req.query.transaction_id || req.query.order_id;
+
+    const hasAccess = await userHasAccessToVideo(videoId, email, transactionId);
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Purchase required to access product link' });
+    }
+
+    const { data: video, error } = await supabase
+      .from('videos')
+      .select('product_link')
+      .eq('id', videoId)
+      .maybeSingle();
+    if (error || !video) return res.status(404).json({ error: 'Video not found' });
+
+    res.json({ product_link: video.product_link || null });
+  } catch (error) {
+    console.error('Error getting product-link:', error);
+    res.status(500).json({ error: 'Failed to get product link', details: error.message });
+  }
+});
+
+// GET /api/videos/:id/playback-url - Retorna URL assinada SOMENTE se o usuário comprou ou vídeo é grátis
+router.get('/videos/:id/playback-url', async (req, res) => {
+  try {
+    if (!requireSupabase(res)) return;
+    const videoId = req.params.id;
+    const email = req.query.email || req.query.buyer_email;
+    const transactionId = req.query.transaction_id || req.query.order_id;
+
+    const hasAccess = await userHasAccessToVideo(videoId, email, transactionId);
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Purchase required to access this video' });
+    }
+
+    const { data: video, error: vErr } = await supabase
+      .from('videos')
+      .select('video_file_id')
+      .eq('id', videoId)
+      .maybeSingle();
+    if (vErr || !video || !video.video_file_id) {
+      return res.status(404).json({ error: 'Video or file not found' });
+    }
+
+    const wasabiConfig = await getWasabiConfigFromServer();
+    if (!wasabiConfig?.accessKey || !wasabiConfig?.secretKey) {
+      return res.status(500).json({ error: 'Wasabi not configured' });
+    }
+    const s3Client = new S3Client({
+      region: wasabiConfig.region,
+      endpoint: wasabiConfig.endpoint,
+      credentials: { accessKeyId: wasabiConfig.accessKey, secretAccessKey: wasabiConfig.secretKey },
+      forcePathStyle: true,
+    });
+    const signedUrl = await getSignedUrl(
+      s3Client,
+      new GetObjectCommand({ Bucket: wasabiConfig.bucket, Key: video.video_file_id }),
+      { expiresIn: 3600 }
+    );
+    res.json({ success: true, url: signedUrl, expiresIn: 3600 });
+  } catch (error) {
+    console.error('Error playback-url:', error);
+    res.status(500).json({ error: 'Failed to get playback URL', details: error.message });
+  }
+});
+
+// GET /api/videos/:id/thumbnail - Retorna URL assinada da thumbnail (público, para exibir capa)
+router.get('/videos/:id/thumbnail', async (req, res) => {
+  try {
+    if (!requireSupabase(res)) return;
+    const { data: video, error } = await supabase
+      .from('videos')
+      .select('thumbnail_url, thumbnail_file_id')
+      .eq('id', req.params.id)
+      .maybeSingle();
+    if (error || !video) return res.status(404).json({ error: 'Video not found' });
+    if (video.thumbnail_url && !video.thumbnail_file_id) {
+      return res.json({ success: true, url: video.thumbnail_url });
+    }
+    if (!video.thumbnail_file_id) return res.status(404).json({ error: 'No thumbnail' });
+    const wasabiConfig = await getWasabiConfigFromServer();
+    if (!wasabiConfig?.accessKey || !wasabiConfig?.secretKey) {
+      return res.status(500).json({ error: 'Wasabi not configured' });
+    }
+    const s3Client = new S3Client({
+      region: wasabiConfig.region,
+      endpoint: wasabiConfig.endpoint,
+      credentials: { accessKeyId: wasabiConfig.accessKey, secretAccessKey: wasabiConfig.secretKey },
+      forcePathStyle: true,
+    });
+    const signedUrl = await getSignedUrl(
+      s3Client,
+      new GetObjectCommand({ Bucket: wasabiConfig.bucket, Key: video.thumbnail_file_id }),
+      { expiresIn: 3600 }
+    );
+    res.json({ success: true, url: signedUrl });
+  } catch (err) {
+    console.error('Thumbnail error:', err);
+    res.status(500).json({ error: 'Failed to get thumbnail' });
+  }
+});
+
+// GET /api/videos/:id/sources - Lista sources do vídeo SOMENTE se tiver compra (senão não expõe source_file_id)
+router.get('/videos/:id/sources', async (req, res) => {
+  try {
+    if (!requireSupabase(res)) return;
+    const videoId = req.params.id;
+    const email = req.query.email || req.query.buyer_email;
+    const transactionId = req.query.transaction_id || req.query.order_id;
+
+    const hasAccess = await userHasAccessToVideo(videoId, email, transactionId);
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Purchase required to list sources' });
+    }
+
+    const { data: sources, error } = await supabase
+      .from('video_sources')
+      .select('id, source_file_id, thumbnail_file_id, position')
+      .eq('video_id', videoId)
+      .order('position', { ascending: true });
+    if (error) throw error;
+    res.json(sources || []);
+  } catch (error) {
+    console.error('Error listing sources:', error);
+    res.status(500).json({ error: 'Failed to list sources', details: error.message });
+  }
+});
+
+// GET /api/videos/:id/source-url - URL assinada para uma source (parte do vídeo) — requer compra
+router.get('/videos/:id/source-url', async (req, res) => {
+  try {
+    if (!requireSupabase(res)) return;
+    const videoId = req.params.id;
+    const sourceFileId = req.query.file_id;
+    const email = req.query.email || req.query.buyer_email;
+    const transactionId = req.query.transaction_id || req.query.order_id;
+
+    if (!sourceFileId) {
+      return res.status(400).json({ error: 'file_id is required' });
+    }
+
+    const hasAccess = await userHasAccessToVideo(videoId, email, transactionId);
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Purchase required' });
+    }
+
+    const { data: sources } = await supabase
+      .from('video_sources')
+      .select('source_file_id')
+      .eq('video_id', videoId);
+    const allowedIds = (sources || []).map(s => s.source_file_id);
+    if (!allowedIds.includes(sourceFileId)) {
+      return res.status(403).json({ error: 'File does not belong to this video' });
+    }
+
+    const wasabiConfig = await getWasabiConfigFromServer();
+    if (!wasabiConfig?.accessKey || !wasabiConfig?.secretKey) {
+      return res.status(500).json({ error: 'Wasabi not configured' });
+    }
+    const s3Client = new S3Client({
+      region: wasabiConfig.region,
+      endpoint: wasabiConfig.endpoint,
+      credentials: { accessKeyId: wasabiConfig.accessKey, secretAccessKey: wasabiConfig.secretKey },
+      forcePathStyle: true,
+    });
+    const signedUrl = await getSignedUrl(
+      s3Client,
+      new GetObjectCommand({ Bucket: wasabiConfig.bucket, Key: sourceFileId }),
+      { expiresIn: 3600 }
+    );
+    res.json({ success: true, url: signedUrl, expiresIn: 3600 });
+  } catch (error) {
+    console.error('Error source-url:', error);
+    res.status(500).json({ error: 'Failed to get source URL', details: error.message });
+  }
+});
+
+// Gerar URL assinada para arquivo no Wasabi — PROTEGIDO: vídeos só com compra; thumbnails liberados
+router.get('/signed-url/:fileId', async (req, res) => {
+  try {
+    const fileId = decodeURIComponent(req.params.fileId || '');
     if (!fileId) {
       return res.status(400).json({ error: 'File ID is required' });
     }
-
-    // Block legacy metadata JSON usage — metadata is now in Supabase
     if (String(fileId).startsWith('metadata/')) {
       return res.status(410).json({ error: 'Legacy metadata file is no longer used. Metadata is stored in Supabase.' });
     }
 
-    const wasabiConfig = await getWasabiConfigFromServer();
-
-    if (!wasabiConfig || !wasabiConfig.accessKey || !wasabiConfig.secretKey) {
-      return res.status(500).json({ error: 'Wasabi configuration not found' });
+    // Thumbnails são públicos (só imagens de prévia)
+    const isThumbnail = fileId.startsWith('thumbnails/');
+    if (!isThumbnail) {
+      const videoId = req.query.video_id || req.query.videoId;
+      const email = req.query.email || req.query.buyer_email;
+      const transactionId = req.query.transaction_id || req.query.order_id;
+      if (!videoId || (!email && !transactionId)) {
+        return res.status(403).json({ error: 'For video files, video_id and proof of purchase (email or transaction_id) are required' });
+      }
+      const hasAccess = await userHasAccessToVideo(videoId, email, transactionId);
+      if (!hasAccess) {
+        return res.status(403).json({ error: 'Purchase required to access this video' });
+      }
+      const { data: video } = await supabase.from('videos').select('video_file_id').eq('id', videoId).maybeSingle();
+      const { data: sources } = await supabase.from('video_sources').select('source_file_id').eq('video_id', videoId);
+      const allowed = [video?.video_file_id, ...(sources || []).map(s => s.source_file_id)].filter(Boolean);
+      if (!allowed.includes(fileId)) {
+        return res.status(403).json({ error: 'This file is not part of the requested video' });
+      }
     }
 
+    const wasabiConfig = await getWasabiConfigFromServer();
+    if (!wasabiConfig?.accessKey || !wasabiConfig?.secretKey) {
+      return res.status(500).json({ error: 'Wasabi configuration not found' });
+    }
     const s3Client = new S3Client({
       region: wasabiConfig.region,
       endpoint: wasabiConfig.endpoint,
-      credentials: {
-        accessKeyId: wasabiConfig.accessKey,
-        secretAccessKey: wasabiConfig.secretKey,
-      },
+      credentials: { accessKeyId: wasabiConfig.accessKey, secretAccessKey: wasabiConfig.secretKey },
       forcePathStyle: true,
     });
-
-    // Gerar URL assinada válida por 1 hora
-    const command = new GetObjectCommand({
-      Bucket: wasabiConfig.bucket,
-      Key: fileId,
-    });
-
-    const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
-
-    res.json({
-      success: true,
-      url: signedUrl,
-      expiresIn: 3600
-    });
-
+    const signedUrl = await getSignedUrl(
+      s3Client,
+      new GetObjectCommand({ Bucket: wasabiConfig.bucket, Key: fileId }),
+      { expiresIn: 3600 }
+    );
+    res.json({ success: true, url: signedUrl, expiresIn: 3600 });
   } catch (error) {
     console.error('Error generating signed URL:', error);
-    res.status(500).json({ 
-      error: 'Failed to generate signed URL',
-      details: error.message 
-    });
+    res.status(500).json({ error: 'Failed to generate signed URL', details: error.message });
   }
 });
 

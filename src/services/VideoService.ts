@@ -320,42 +320,85 @@ export class VideoService {
     }
   }
   
-  // Get video file URL for streaming
+  private static getPurchaseProof(): { email?: string; transactionId?: string } {
+    try {
+      const raw = sessionStorage.getItem('purchase_proof');
+      if (!raw) return {};
+      const p = JSON.parse(raw) as { email?: string; transactionId?: string };
+      return { email: p.email, transactionId: p.transactionId };
+    } catch {
+      return {};
+    }
+  }
+
+  // Get video file URL for streaming — usa endpoint protegido (exige compra)
   static async getVideoFileUrl(videoId: string): Promise<string | null> {
     try {
-      // Get video details first
-      const video = await this.getVideo(videoId);
-      if (!video) {
-        console.error(`Video ${videoId} not found`);
-        return null;
+      const proof = this.getPurchaseProof();
+      const baseUrl = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_URL || '');
+      const params = new URLSearchParams();
+      if (proof.email) params.set('email', proof.email);
+      if (proof.transactionId) params.set('transaction_id', proof.transactionId);
+      const qs = params.toString();
+      const url = `${baseUrl}/api/videos/${encodeURIComponent(videoId)}/playback-url${qs ? `?${qs}` : ''}`;
+      const res = await fetch(url);
+      if (!res.ok) {
+        if (res.status === 403) return null;
+        throw new Error(`${res.status}`);
       }
-      
-      // Verificando todos os possíveis campos onde o ID do vídeo pode estar
-      const videoFileId = video.video_id || video.videoFileId;
-      
-      if (!videoFileId) {
-        console.error(`Video ${videoId} has no video file ID (checked both video_id and videoFileId)`);
-        return null;
-      }
-      
-      // Get video file URL
-      try {
-        const fileUrl = await wasabiService.getFileUrl(videoFileId);
-        return fileUrl;
-      } catch (error) {
-        console.error(`Error getting file URL:`, error);
-        console.error(`Video File ID: ${videoFileId}`);
-        return null;
-      }
+      const data = await res.json();
+      return data?.url ?? null;
     } catch (error) {
       console.error(`Error getting video file URL for ${videoId}:`, error);
       return null;
     }
   }
 
-  // Get direct file URL by Wasabi file key (for specific sources)
-  static async getFileUrlById(fileId: string): Promise<string | null> {
+  // O que o usuário compra é o product_link; só é devolvido pela API com prova de compra (ou vídeo grátis)
+  static async getProductLink(videoId: string, email?: string, transactionId?: string): Promise<string | null> {
     try {
+      const proof = email !== undefined || transactionId !== undefined
+        ? { email, transactionId }
+        : this.getPurchaseProof();
+      const baseUrl = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_URL || '');
+      const params = new URLSearchParams();
+      if (proof.email) params.set('email', proof.email);
+      if (proof.transactionId) params.set('transaction_id', proof.transactionId);
+      const qs = params.toString();
+      const res = await fetch(`${baseUrl}/api/videos/${encodeURIComponent(videoId)}/product-link${qs ? `?${qs}` : ''}`);
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data?.product_link ?? null;
+    } catch (error) {
+      console.error('Error getting product link:', error);
+      return null;
+    }
+  }
+
+  // URL para uma source (parte do vídeo) — exige compra
+  static async getSourceFileUrl(videoId: string, sourceFileId: string): Promise<string | null> {
+    try {
+      const proof = this.getPurchaseProof();
+      const baseUrl = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_URL || '');
+      const params = new URLSearchParams({ file_id: sourceFileId });
+      if (proof.email) params.set('email', proof.email);
+      if (proof.transactionId) params.set('transaction_id', proof.transactionId);
+      const res = await fetch(`${baseUrl}/api/videos/${encodeURIComponent(videoId)}/source-url?${params}`);
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data?.url ?? null;
+    } catch (error) {
+      console.error('Error getting source file URL:', error);
+      return null;
+    }
+  }
+
+  // Get direct file URL by Wasabi file key — apenas para thumbnails (público) ou uso interno com prova
+  static async getFileUrlById(fileId: string, videoId?: string): Promise<string | null> {
+    try {
+      if (videoId && !fileId.startsWith('thumbnails/')) {
+        return this.getSourceFileUrl(videoId, fileId);
+      }
       return await wasabiService.getFileUrl(fileId);
     } catch (error) {
       console.error('Error getting file URL by id:', error);

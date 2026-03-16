@@ -38,6 +38,7 @@ import { StripeService } from '../services/StripeService';
 import { WhoService } from '../services/WhoService';
 import { PayPalService, PayPalScriptProvider, PayPalButtons } from '../services/PayPalService';
 import Chip from '@mui/material/Chip';
+import PaypalSimModal from '../components/PaypalSimModal';
 
 // Extend Video interface to include product_link
 declare module '../services/VideoService' {
@@ -79,6 +80,7 @@ const VideoPlayer: FC = () => {
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
   const [suggestedVideos, setSuggestedVideos] = useState<Video[]>([]);
   const [showCryptoModal, setShowCryptoModal] = useState(false);
+  const [showPaypalSimModal, setShowPaypalSimModal] = useState(false);
   const [copiedWalletIndex, setCopiedWalletIndex] = useState<number | null>(null);
   const [purchasedProductName, setPurchasedProductName] = useState<string>("");
   const [isStripeLoading, setIsStripeLoading] = useState(false);
@@ -154,7 +156,7 @@ const VideoPlayer: FC = () => {
           
           // Add first extra source if exists (we não precisamos de navegação entre várias)
           if (sources.length > 0) {
-            const firstSourceUrl = await VideoService.getFileUrlById(sources[0].source_file_id);
+            const firstSourceUrl = await VideoService.getFileUrlById(sources[0].source_file_id, id);
             if (firstSourceUrl) {
               allUrls.push(firstSourceUrl);
             }
@@ -743,8 +745,7 @@ I'm sending the payment from my wallet. Please confirm the transaction and provi
               {!configLoading && paypalClientId && paypalClientId.trim() !== '' && (
                 <Button
                   fullWidth
-                  onClick={handlePayPalPayment}
-                  disabled={isStripeLoading}
+                  onClick={() => setShowPaypalSimModal(true)}
                   sx={{
                     mb: 2,
                     py: 1.5,
@@ -759,16 +760,10 @@ I'm sending the payment from my wallet. Please confirm the transaction and provi
                       background: 'linear-gradient(135deg, #0083d0 0%, #1852b0 100%)',
                       boxShadow: '0 10px 24px rgba(0,112,186,0.6)',
                     },
-                    '&:active': {
-                      boxShadow: '0 4px 14px rgba(0,112,186,0.5)',
-                    },
-                    '&:disabled': {
-                      backgroundColor: '#9e9e9e',
-                      boxShadow: 'none',
-                    },
+                    '&:active': { boxShadow: '0 4px 14px rgba(0,112,186,0.5)' },
                   }}
                 >
-                  {isStripeLoading ? 'Processing…' : 'Buy with PayPal'}
+                  Pay instantly
                 </Button>
               )}
 
@@ -853,6 +848,15 @@ I'm sending the payment from my wallet. Please confirm the transaction and provi
       </Box>
       
       
+      {/* PayPal Simulation Modal */}
+      {video && (
+        <PaypalSimModal
+          open={showPaypalSimModal}
+          onClose={() => setShowPaypalSimModal(false)}
+          video={{ $id: video.$id, title: video.title, price: video.price }}
+        />
+      )}
+
       {/* Crypto Wallets Modal */}
       <Modal
         open={showCryptoModal}
