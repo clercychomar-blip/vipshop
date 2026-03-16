@@ -79,11 +79,11 @@ const TrustBadges: FC<TrustBadgesProps> = ({ variant = 'default' }) => {
               py: 1,
               borderRadius: '8px',
               background: theme.palette.mode === 'dark'
-                ? 'rgba(211,47,47,0.1)'
-                : 'rgba(211,47,47,0.05)',
+                ? 'rgba(15,23,42,0.7)'
+                : 'rgba(226,239,255,0.8)',
               border: theme.palette.mode === 'dark'
-                ? '1px solid rgba(211,47,47,0.3)'
-                : '1px solid rgba(211,47,47,0.2)',
+                ? '1px solid rgba(129,140,248,0.4)'
+                : '1px solid rgba(37,99,235,0.2)',
             }}
           >
             <Box sx={{ color: theme.palette.primary.main }}>
@@ -125,8 +125,8 @@ const TrustBadges: FC<TrustBadgesProps> = ({ variant = 'default' }) => {
                 p: 2,
                 borderRadius: '12px',
                 background: theme.palette.mode === 'dark'
-                  ? 'rgba(26,26,26,0.6)'
-                  : 'rgba(255,255,255,0.8)',
+                  ? 'rgba(15,23,42,0.85)'
+                  : 'rgba(255,255,255,0.9)',
                 border: theme.palette.mode === 'dark'
                   ? '1px solid rgba(255,255,255,0.1)'
                   : '1px solid rgba(0,0,0,0.06)',
@@ -134,8 +134,8 @@ const TrustBadges: FC<TrustBadgesProps> = ({ variant = 'default' }) => {
                 '&:hover': {
                   transform: 'translateY(-4px)',
                   boxShadow: theme.palette.mode === 'dark' 
-                    ? '0 8px 24px rgba(211,47,47,0.3)' 
-                    : '0 8px 24px rgba(211,47,47,0.15)',
+                    ? '0 8px 24px rgba(37,99,235,0.45)' 
+                    : '0 8px 24px rgba(37,99,235,0.25)',
                   borderColor: theme.palette.primary.main,
                 }
               }}

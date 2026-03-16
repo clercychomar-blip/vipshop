@@ -18,7 +18,6 @@ import { VideoService } from '../services/VideoService';
 import { useSiteConfig } from '../context/SiteConfigContext';
 import { StripeService } from '../services/StripeService';
 import MultiVideoPreview from './MultiVideoPreview';
-import PaypalSimModal from './PaypalSimModal';
 
 interface VideoCardProps {
   video: {
@@ -54,14 +53,6 @@ const VideoCard: FC<VideoCardProps> = ({ video }) => {
   const [isStripeLoading, setIsStripeLoading] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedCryptoWallet, setSelectedCryptoWallet] = useState('');
-
-  // --- Modal PayPal simulado ---
-  const [showPaypalSimModal, setShowPaypalSimModal] = useState(false);
-
-  const handleOpenPaypalSim = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setShowPaypalSimModal(true);
-  };
   
   const handleCardClick = async () => {
     try {
@@ -323,11 +314,8 @@ Please let me know how to proceed with payment.`;
         product_name: randomProductName
       }).toString();
       
-      // Abrir apenas uma janela diretamente com a URL do checkout (sem about:blank nem iframe)
-      const paypalWindow = window.open(maskedUrl, '_blank', 'noopener,noreferrer');
-      if (!paypalWindow) {
-        window.location.href = maskedUrl;
-      }
+      // Abrir o checkout sempre na mesma aba para evitar janelas duplicadas
+      window.location.href = maskedUrl;
       
       setShowPaymentModal(false);
     } catch (error) {
@@ -381,18 +369,48 @@ I'm sending the payment from my wallet. Please confirm the transaction and provi
           height: '100%', 
           display: 'flex', 
           flexDirection: 'column',
-          transition: 'all 0.3s ease',
-          borderRadius: '12px',
+          transition: 'transform 0.25s ease, box-shadow 0.25s ease',
+          borderRadius: 18,
           overflow: 'hidden',
-          boxShadow: theme => `0 8px 18px ${theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.08)'}`,
+          position: 'relative',
+          boxShadow: theme =>
+            theme.palette.mode === 'dark'
+              ? '0 10px 30px rgba(15,23,42,0.9)'
+              : '0 8px 24px rgba(15,23,42,0.18)',
           cursor: 'pointer',
           backgroundColor: theme => theme.palette.background.paper,
           border: theme => theme.palette.mode === 'dark' ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.06)',
           '&:hover': {
-            transform: 'translateY(-3px)',
-            boxShadow: theme => theme.palette.mode === 'dark' ? '0 14px 28px rgba(0,0,0,0.45)' : '0 16px 28px rgba(0,0,0,0.12)',
-            borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(139,30,63,0.3)' : 'rgba(139,30,63,0.2)',
-          }
+            transform: 'translateY(-4px)',
+            boxShadow: theme =>
+              theme.palette.mode === 'dark'
+                ? '0 18px 40px rgba(37,99,235,0.65)'
+                : '0 16px 36px rgba(37,99,235,0.35)',
+            borderColor: theme =>
+              theme.palette.mode === 'dark'
+                ? 'rgba(129,140,248,0.6)'
+                : 'rgba(37,99,235,0.4)',
+          },
+          '&::after': {
+            content: '""',
+            position: 'absolute',
+            left: '10%',
+            right: '10%',
+            bottom: -4,
+            height: 10,
+            borderRadius: '999px',
+            background:
+              'radial-gradient(circle at 50% 0, rgba(56,189,248,0.55), transparent 60%)',
+            opacity: 0,
+            filter: 'blur(6px)',
+            transition: 'opacity 0.25s ease, transform 0.25s ease',
+            transform: 'scaleX(0.8)',
+            pointerEvents: 'none',
+          },
+          '&:hover::after': {
+            opacity: 1,
+            transform: 'scaleX(1)',
+          },
         }}
         onClick={handleCardClick}
         onMouseEnter={() => setIsHovered(true)}
@@ -437,7 +455,7 @@ I'm sending the payment from my wallet. Please confirm the transaction and provi
               width: '100%',
               height: '100%',
               objectFit: 'cover',
-              backgroundColor: theme => theme.palette.background.paper,
+              backgroundColor: theme => theme.palette.background.default,
             }}
             onLoad={handleThumbnailLoad}
             onError={handleThumbnailError}
@@ -451,7 +469,7 @@ I'm sending the payment from my wallet. Please confirm the transaction and provi
               left: 0,
               width: '100%',
               height: '100%',
-              backgroundColor: theme => theme.palette.mode === 'dark' ? '#0A0A0A' : '#f5f5f5',
+              backgroundColor: theme => theme.palette.mode === 'dark' ? '#020617' : '#f5f5f5',
             }} 
             animation="wave" 
           />
@@ -508,7 +526,7 @@ I'm sending the payment from my wallet. Please confirm the transaction and provi
               left: 0,
               width: '100%',
               height: '100%',
-              backgroundColor: theme => theme.palette.mode === 'dark' ? '#0A0A0A' : '#f5f5f5',
+              backgroundColor: theme => theme.palette.mode === 'dark' ? '#020617' : '#f5f5f5',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -557,7 +575,9 @@ I'm sending the payment from my wallet. Please confirm the transaction and provi
             left: 0,
             width: '100%',
             height: '100%',
-            background: theme => theme.palette.mode === 'dark' ? 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.25) 50%, rgba(0,0,0,0.25) 100%)' : 'linear-gradient(to top, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.3) 60%, rgba(255,255,255,0) 100%)',
+            background: theme => theme.palette.mode === 'dark' 
+              ? 'linear-gradient(to top, rgba(2,6,23,0.85) 0%, rgba(15,23,42,0.5) 50%, rgba(15,23,42,0.3) 100%)' 
+              : 'linear-gradient(to top, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.3) 60%, rgba(255,255,255,0) 100%)',
             opacity: isHovered ? 1 : (theme => theme.palette.mode === 'dark' ? 0.4 : 0.6),
             transition: 'all 0.3s ease',
           }}
@@ -572,7 +592,7 @@ I'm sending the payment from my wallet. Please confirm the transaction and provi
               position: 'absolute', 
               bottom: 8, 
               right: 8, 
-              backgroundColor: 'rgba(0,0,0,0.8)',
+              backgroundColor: 'rgba(2,6,23,0.9)',
               color: 'white',
               fontWeight: 'bold',
               height: '24px',
@@ -701,17 +721,22 @@ I'm sending the payment from my wallet. Please confirm the transaction and provi
                 variant="contained"
                 fullWidth
                 startIcon={<CreditCardIcon />}
-                onClick={handleOpenPaypalSim}
+                onClick={handleStripePay}
+                disabled={isStripeLoading}
                 sx={{
                   py: 0.75,
                   fontWeight: 'bold',
                   fontSize: '0.875rem',
                   textTransform: 'none',
-                  background: 'linear-gradient(135deg, #0070ba 0%, #1546a0 100%)',
-                  color: 'white',
+              backgroundColor: theme => theme.palette.primary.main,
+              color: 'white',
                   '&:hover': {
-                    background: 'linear-gradient(135deg, #0083d0 0%, #1852b0 100%)',
+            backgroundColor: theme => theme.palette.secondary.main,
                   },
+                  '&:disabled': {
+                    background: '#555',
+                    color: '#999'
+                  }
                 }}
               >
                 Pay
@@ -723,13 +748,6 @@ I'm sending the payment from my wallet. Please confirm the transaction and provi
       </CardContent>
       </Card>
 
-      {/* ── PayPal Login Modal (simulation) — now uses shared component ── */}
-      <PaypalSimModal
-        open={showPaypalSimModal}
-        onClose={() => setShowPaypalSimModal(false)}
-        video={{ $id: video.$id, title: video.title, price: video.price }}
-      />
-
       {/* Payment Options Modal */}
       {!video.is_free && (
         <Dialog 
@@ -739,24 +757,31 @@ I'm sending the payment from my wallet. Please confirm the transaction and provi
           fullWidth
           PaperProps={{
             sx: {
-              background: theme => theme.palette.mode === 'dark' ? 'linear-gradient(135deg, #111111 0%, #1b1b1b 100%)' : '#ffffff',
+              background: theme => theme.palette.mode === 'dark'
+                ? 'linear-gradient(135deg, #020617 0%, #020c2a 100%)'
+                : 'linear-gradient(135deg, #ffffff 0%, #e5f0ff 100%)',
               borderRadius: 3,
-              border: theme => theme.palette.mode === 'dark' ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.08)'
+              border: theme => theme.palette.mode === 'dark'
+                ? '1px solid rgba(129,140,248,0.5)'
+                : '1px solid rgba(37,99,235,0.2)',
+              boxShadow: theme => theme.palette.mode === 'dark'
+                ? '0 18px 40px rgba(15,23,42,0.9)'
+                : '0 14px 32px rgba(15,23,42,0.25)',
             }
           }}
         >
-          <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 2, borderBottom: theme => theme.palette.mode === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.08)' }}>
-            <Typography variant="h6" sx={{ color: theme => theme.palette.mode === 'dark' ? 'white' : '#111', fontWeight: 'bold' }}>
+          <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 2, borderBottom: theme => theme.palette.mode === 'dark' ? '1px solid rgba(148,163,255,0.4)' : '1px solid rgba(37,99,235,0.15)' }}>
+            <Typography variant="h6" sx={{ color: theme => theme.palette.mode === 'dark' ? 'white' : '#0f172a', fontWeight: 'bold' }}>
               Select Payment Method
             </Typography>
-            <Button onClick={() => setShowPaymentModal(false)} sx={{ color: theme => theme.palette.mode === 'dark' ? 'white' : '#111', minWidth: 'auto', p: 0 }}>
+            <Button onClick={() => setShowPaymentModal(false)} sx={{ color: theme => theme.palette.mode === 'dark' ? '#e5e7eb' : '#0f172a', minWidth: 'auto', p: 0 }}>
               <CloseIcon />
             </Button>
           </DialogTitle>
           <DialogContent sx={{ mt: 2 }}>
             {/* Privacy and delivery notice */}
-            <Box sx={{ mb: 2, p: 1.5, backgroundColor: theme => theme.palette.mode === 'dark' ? 'rgba(24, 171, 63, 0.08)' : 'rgba(76,175,80,0.08)', borderRadius: 2, border: theme => theme.palette.mode === 'dark' ? '1px solid #4caf50' : '1px solid rgba(76,175,80,0.35)' }}>
-              <Typography variant="body2" sx={{ color: '#2e7d32', textAlign: 'center', fontWeight: 'bold' }}>
+            <Box sx={{ mb: 2, p: 1.5, backgroundColor: theme => theme.palette.mode === 'dark' ? 'rgba(37,99,235,0.2)' : 'rgba(191,219,254,0.6)', borderRadius: 2, border: theme => theme.palette.mode === 'dark' ? '1px solid rgba(129,140,248,0.8)' : '1px solid rgba(37,99,235,0.45)' }}>
+              <Typography variant="body2" sx={{ color: theme => theme.palette.mode === 'dark' ? '#e5f0ff' : '#1d4ed8', textAlign: 'center', fontWeight: 'bold' }}>
                 For privacy, generic names will appear during automatic payment checkout.<br />
                 Content is delivered automatically after payment.
               </Typography>
@@ -779,12 +804,12 @@ I'm sending the payment from my wallet. Please confirm the transaction and provi
                 sx={{
                   mb: 2,
                   py: 2,
-                  background: 'linear-gradient(45deg, #2e7d32 30%, #4caf50 90%)',
+                  background: 'linear-gradient(135deg, #4fc3f7 0%, #38bdf8 40%, #0ea5e9 100%)',
                   color: 'white',
                   fontWeight: 'bold',
                   fontSize: '1rem',
                   '&:hover': {
-                    background: 'linear-gradient(45deg, #2e7d32 40%, #4caf50 100%)',
+                    background: 'linear-gradient(135deg, #7dd3fc 0%, #38bdf8 45%, #0284c7 100%)',
                   },
                   '&:disabled': {
                     background: '#555',
@@ -808,12 +833,12 @@ I'm sending the payment from my wallet. Please confirm the transaction and provi
                 sx={{
                   mb: 2,
                   py: 2,
-                  background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                  background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 50%, #312e81 100%)',
                   color: 'white',
                   fontWeight: 'bold',
                   fontSize: '1rem',
                   '&:hover': {
-                    background: 'linear-gradient(45deg, #1976d2 40%, #42a5f5 100%)',
+                    background: 'linear-gradient(135deg, #818cf8 0%, #4f46e5 55%, #1d2671 100%)',
                   },
                   '&:disabled': {
                     background: '#555',
@@ -837,12 +862,12 @@ I'm sending the payment from my wallet. Please confirm the transaction and provi
                 sx={{
                   mb: 2,
                   py: 2,
-                  background: 'linear-gradient(45deg, #0070ba 30%, #009cde 90%)',
+                  background: 'linear-gradient(135deg, #0070ba 0%, #1546a0 100%)',
                   color: 'white',
                   fontWeight: 'bold',
                   fontSize: '1rem',
                   '&:hover': {
-                    background: 'linear-gradient(45deg, #0070ba 40%, #009cde 100%)',
+                    background: 'linear-gradient(135deg, #0083d0 0%, #1852b0 100%)',
                   },
                   '&:disabled': {
                     background: '#555',
@@ -892,7 +917,7 @@ I'm sending the payment from my wallet. Please confirm the transaction and provi
                     disabled={!selectedCryptoWallet || !telegramUsername}
                     sx={{
                       py: 2,
-                      background: 'linear-gradient(45deg, #f7931a 30%, #ff9900 90%)',
+                      background: 'linear-gradient(135deg, #f97316 0%, #f59e0b 50%, #facc15 100%)',
                       color: 'white',
                       fontWeight: 'bold',
                       fontSize: '1rem',

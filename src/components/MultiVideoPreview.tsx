@@ -119,7 +119,7 @@ const MultiVideoPreview: FC<MultiVideoPreviewProps> = ({
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'center',
-        bgcolor: '#0A0A0A',
+        bgcolor: '#020617',
         borderRadius: 1
       }}>
         <Typography color="text.secondary">No videos available</Typography>
@@ -149,7 +149,7 @@ const MultiVideoPreview: FC<MultiVideoPreviewProps> = ({
             sx={{ 
               width: '100%', 
               height: '100%',
-              bgcolor: '#0A0A0A'
+              bgcolor: '#020617'
             }} 
             animation="wave" 
           />
@@ -162,7 +162,7 @@ const MultiVideoPreview: FC<MultiVideoPreviewProps> = ({
               width: '100%',
               height: '100%',
               objectFit: 'cover',
-              backgroundColor: '#0A0A0A',
+              backgroundColor: '#020617',
               filter: 'brightness(0.8)',
             }}
           />
@@ -179,10 +179,10 @@ const MultiVideoPreview: FC<MultiVideoPreviewProps> = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: 'rgba(0,0,0,0.3)',
+            backgroundColor: 'rgba(2,6,23,0.5)',
             transition: 'all 0.3s ease',
             '&:hover': {
-              backgroundColor: 'rgba(0,0,0,0.5)',
+              backgroundColor: 'rgba(15,23,42,0.85)',
             }
           }}
         >
@@ -209,7 +209,7 @@ const MultiVideoPreview: FC<MultiVideoPreviewProps> = ({
             bottom: 0,
             left: 0,
             right: 0,
-            background: 'linear-gradient(transparent, rgba(0,0,0,0.8))',
+            background: 'linear-gradient(transparent, rgba(2,6,23,0.95))',
             color: 'white',
             p: 2,
           }}
@@ -224,7 +224,7 @@ const MultiVideoPreview: FC<MultiVideoPreviewProps> = ({
                 label={formatDuration(currentVideo.duration)} 
                 size="small" 
                 sx={{ 
-                  backgroundColor: 'rgba(0,0,0,0.8)',
+                  backgroundColor: 'rgba(2,6,23,0.9)',
                   color: 'white',
                   height: '20px',
                   fontSize: '0.7rem'
@@ -248,7 +248,7 @@ const MultiVideoPreview: FC<MultiVideoPreviewProps> = ({
               position: 'absolute', 
               top: 8, 
               right: 8, 
-              backgroundColor: 'rgba(0,0,0,0.8)',
+              backgroundColor: 'rgba(2,6,23,0.9)',
               color: 'white',
               fontWeight: 'bold',
               height: '24px',

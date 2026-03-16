@@ -133,7 +133,7 @@ const VideoPlayerPage: FC = () => {
                 width: '100%',
                 height: '100%',
                 objectFit: 'contain',
-                backgroundColor: '#000'
+                backgroundColor: '#020617'
               }}
               src={isReady ? videoUrl : undefined}
               poster={video?.thumbnailUrl}

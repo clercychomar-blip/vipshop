@@ -160,7 +160,7 @@ const PromoOfferBanner = ({ telegramLink, telegramUsername, prefilledMessage }: 
           borderRadius: { xs: 0, sm: 2 },
           p: { xs: 2, sm: 2.5 },
           background: theme => theme.palette.mode === 'dark' 
-            ? 'linear-gradient(135deg, rgba(30,30,30,0.95) 0%, rgba(20,20,20,0.98) 100%)'
+            ? 'linear-gradient(135deg, rgba(3,9,37,0.96) 0%, rgba(2,6,23,0.99) 100%)'
             : 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(245,245,250,0.98) 100%)',
           backdropFilter: 'blur(10px)',
           border: theme => `1px solid ${theme.palette.divider}`,

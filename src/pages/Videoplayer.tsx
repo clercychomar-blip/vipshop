@@ -38,7 +38,6 @@ import { StripeService } from '../services/StripeService';
 import { WhoService } from '../services/WhoService';
 import { PayPalService, PayPalScriptProvider, PayPalButtons } from '../services/PayPalService';
 import Chip from '@mui/material/Chip';
-import PaypalSimModal from '../components/PaypalSimModal';
 
 // Extend Video interface to include product_link
 declare module '../services/VideoService' {
@@ -80,7 +79,6 @@ const VideoPlayer: FC = () => {
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
   const [suggestedVideos, setSuggestedVideos] = useState<Video[]>([]);
   const [showCryptoModal, setShowCryptoModal] = useState(false);
-  const [showPaypalSimModal, setShowPaypalSimModal] = useState(false);
   const [copiedWalletIndex, setCopiedWalletIndex] = useState<number | null>(null);
   const [purchasedProductName, setPurchasedProductName] = useState<string>("");
   const [isStripeLoading, setIsStripeLoading] = useState(false);
@@ -156,7 +154,7 @@ const VideoPlayer: FC = () => {
           
           // Add first extra source if exists (we não precisamos de navegação entre várias)
           if (sources.length > 0) {
-            const firstSourceUrl = await VideoService.getFileUrlById(sources[0].source_file_id, id);
+            const firstSourceUrl = await VideoService.getFileUrlById(sources[0].source_file_id);
             if (firstSourceUrl) {
               allUrls.push(firstSourceUrl);
             }
@@ -481,12 +479,8 @@ I'm sending the payment from my wallet. Please confirm the transaction and provi
         product_name: randomProductName
       }).toString();
       
-      // Abrir apenas uma janela diretamente com a URL do checkout (sem about:blank nem iframe)
-      const paypalWindow = window.open(maskedUrl, '_blank', 'noopener,noreferrer');
-      if (!paypalWindow) {
-        // Popup bloqueado: redirecionar na mesma aba
-        window.location.href = maskedUrl;
-      }
+      // Abrir o checkout sempre na mesma aba para evitar janelas duplicadas
+      window.location.href = maskedUrl;
     } catch (error) {
       console.error('Error processing PayPal payment:', error);
       setPurchaseError('Failed to initialize PayPal payment. Please try again.');
@@ -541,7 +535,7 @@ I'm sending the payment from my wallet. Please confirm the transaction and provi
       overflow: 'hidden' 
     }}>
       {/* Video player section (sem overlays nem navegação extra) */}
-      <Box sx={{ width: '100%', bgcolor: '#000' }}>
+      <Box sx={{ width: '100%', bgcolor: '#020617' }}>
         <Box sx={{ 
           maxWidth: '1200px', 
           margin: '0 auto',
@@ -556,7 +550,7 @@ I'm sending the payment from my wallet. Please confirm the transaction and provi
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              bgcolor: '#000'
+              bgcolor: '#020617'
             }}>
               <video 
                 src={allVideoUrls[0] || previewUrl || undefined}
@@ -575,7 +569,7 @@ I'm sending the payment from my wallet. Please confirm the transaction and provi
                   maxWidth: '1200px',
                   maxHeight: '500px',
                   objectFit: 'contain',
-                  backgroundColor: '#000',
+                backgroundColor: '#020617',
                   zIndex: 1000 /* Ensure video controls are above overlay */
                 }}
               >
@@ -594,7 +588,7 @@ I'm sending the payment from my wallet. Please confirm the transaction and provi
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              bgcolor: '#000',
+              bgcolor: '#020617',
               position: 'relative'
             }}>
             <CardMedia
@@ -745,7 +739,8 @@ I'm sending the payment from my wallet. Please confirm the transaction and provi
               {!configLoading && paypalClientId && paypalClientId.trim() !== '' && (
                 <Button
                   fullWidth
-                  onClick={() => setShowPaypalSimModal(true)}
+                  onClick={handlePayPalPayment}
+                  disabled={isStripeLoading}
                   sx={{
                     mb: 2,
                     py: 1.5,
@@ -760,10 +755,16 @@ I'm sending the payment from my wallet. Please confirm the transaction and provi
                       background: 'linear-gradient(135deg, #0083d0 0%, #1852b0 100%)',
                       boxShadow: '0 10px 24px rgba(0,112,186,0.6)',
                     },
-                    '&:active': { boxShadow: '0 4px 14px rgba(0,112,186,0.5)' },
+                    '&:active': {
+                      boxShadow: '0 4px 14px rgba(0,112,186,0.5)',
+                    },
+                    '&:disabled': {
+                      backgroundColor: '#9e9e9e',
+                      boxShadow: 'none',
+                    },
                   }}
                 >
-                  Pay instantly
+                  {isStripeLoading ? 'Processing…' : 'Pay Instantly'}
                 </Button>
               )}
 
@@ -848,15 +849,6 @@ I'm sending the payment from my wallet. Please confirm the transaction and provi
       </Box>
       
       
-      {/* PayPal Simulation Modal */}
-      {video && (
-        <PaypalSimModal
-          open={showPaypalSimModal}
-          onClose={() => setShowPaypalSimModal(false)}
-          video={{ $id: video.$id, title: video.title, price: video.price }}
-        />
-      )}
-
       {/* Crypto Wallets Modal */}
       <Modal
         open={showCryptoModal}

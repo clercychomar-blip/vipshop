@@ -332,7 +332,7 @@ Please let me know if you need any assistance accessing your content.`;
     <Box sx={{ 
       width: '100%',
       background: theme => theme.palette.mode === 'dark'
-        ? 'linear-gradient(180deg, rgba(10,10,10,1) 0%, rgba(15,15,20,1) 100%)'
+        ? 'linear-gradient(180deg, #020617 0%, #020c2a 100%)'
         : 'linear-gradient(180deg, rgba(250,250,252,1) 0%, rgba(255,255,255,1) 100%)'
     }}>
       {/* Add CSS animation for pulse effect */}
@@ -440,7 +440,7 @@ Please let me know if you need any assistance accessing your content.`;
                     fontWeight: 'bold',
                     border: theme => `1px solid ${theme.palette.divider}`
                   }}
-                  icon={<span style={{ width: 8, height: 8, borderRadius: '50%', background: '#d32f2f', display: 'inline-block', boxShadow: '0 0 0 2px rgba(211,47,47,0.15)' }} />}
+                  icon={<span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', display: 'inline-block', boxShadow: '0 0 0 2px rgba(34,197,94,0.25)' }} />}
                 />
                 <Chip 
                   label={`Up to $${Math.max(...videos.map(v => v.price)).toFixed(2)}`}

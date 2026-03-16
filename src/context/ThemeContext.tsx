@@ -63,15 +63,15 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       },
       background: {
         default: mode === 'dark' 
-          ? '#0f0f1a' 
+          ? '#020617' 
           : '#f7f7fb',
         paper: mode === 'dark' 
-          ? 'rgba(15,15,26,0.98)' 
+          ? 'rgba(3,7,26,0.98)' 
           : '#ffffff',
       },
       text: {
         primary: mode === 'dark' ? '#e8e8e8' : '#111111',
-        secondary: mode === 'dark' ? '#8b9dc3' : '#4b4b4b',
+        secondary: mode === 'dark' ? '#9fb3ff' : '#4b4b4b',
       },
       error: {
         main: '#d32f2f',
@@ -106,7 +106,37 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
             padding: '8px 20px',
             fontWeight: 600,
             textTransform: 'none',
-            transition: 'all 0.2s ease',
+            transition: 'all 0.25s ease',
+            position: 'relative',
+            overflow: 'hidden',
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              inset: 0,
+              borderRadius: 999,
+              background:
+                'radial-gradient(circle at 0 0, rgba(79,195,247,0.35), transparent 55%), radial-gradient(circle at 100% 100%, rgba(21,101,192,0.35), transparent 55%)',
+              opacity: 0,
+              transform: 'scale(0.9)',
+              transition: 'opacity 0.25s ease, transform 0.25s ease',
+              pointerEvents: 'none',
+            },
+            '&:hover': {
+              transform: 'translateY(-1px)',
+              boxShadow: mode === 'dark'
+                ? '0 8px 20px rgba(15,23,42,0.7)'
+                : '0 6px 16px rgba(15,23,42,0.2)',
+            },
+            '&:hover::after': {
+              opacity: 1,
+              transform: 'scale(1.02)',
+            },
+            '&:active': {
+              transform: 'translateY(0)',
+              boxShadow: mode === 'dark'
+                ? '0 4px 12px rgba(15,23,42,0.7)'
+                : '0 3px 10px rgba(15,23,42,0.25)',
+            },
           },
           containedPrimary: {
             background: `linear-gradient(135deg, ${ebookPrimaryBlue} 0%, ${ebookPrimaryBlueDark} 100%)`,

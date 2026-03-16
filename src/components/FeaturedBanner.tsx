@@ -118,10 +118,6 @@ const FeaturedBanner = ({ onError }: FeaturedBannerProps) => {
 
   // Temporarily disabled
   return null;
-  
-  if (loading || !featuredVideo) {
-    return null; // Or a skeleton loader
-  }
 
   // Extract only what we need from the description (first 150 characters)
   const truncatedDescription = featuredVideo.description.length > 150 

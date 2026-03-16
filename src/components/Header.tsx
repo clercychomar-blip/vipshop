@@ -61,7 +61,7 @@ const Header: FC = () => {
       position="sticky"
       sx={{
         background: mode === 'dark' 
-          ? 'linear-gradient(180deg, rgba(10,10,10,0.98) 0%, rgba(15,15,15,0.95) 100%)'
+          ? 'linear-gradient(180deg, rgba(3,9,37,0.98) 0%, rgba(2,6,23,0.96) 100%)'
           : 'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(250,250,252,0.95) 100%)',
         backdropFilter: 'blur(10px)',
         color: mode === 'dark' ? '#fff' : '#111',

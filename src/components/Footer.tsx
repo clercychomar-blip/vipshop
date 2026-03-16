@@ -67,7 +67,7 @@ const Footer: FC = () => {
       sx={{ 
         py: 4, 
         background: theme.palette.mode === 'dark' 
-          ? 'linear-gradient(180deg, rgba(15,15,15,0.95) 0%, rgba(10,10,10,0.98) 100%)'
+          ? 'linear-gradient(180deg, rgba(3,9,37,0.96) 0%, rgba(2,6,23,0.99) 100%)'
           : 'linear-gradient(180deg, rgba(250,250,252,0.95) 0%, rgba(255,255,255,0.98) 100%)',
         borderTop: theme.palette.mode === 'dark'
           ? '1px solid rgba(255,255,255,0.05)'
@@ -102,7 +102,7 @@ const Footer: FC = () => {
                   mb: 1.5, 
                   color: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)',
                   '&:hover': {
-                    color: '#d32f2f'
+                    color: theme.palette.primary.main
                   }
                 }}
               >
@@ -116,7 +116,7 @@ const Footer: FC = () => {
                   mb: 1.5, 
                   color: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)',
                   '&:hover': {
-                    color: '#d32f2f'
+                    color: theme.palette.primary.main
                   }
                 }}
               >
@@ -130,7 +130,7 @@ const Footer: FC = () => {
                   mb: 1.5, 
                   color: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)',
                   '&:hover': {
-                    color: '#d32f2f'
+                    color: theme.palette.primary.main
                   }
                 }}
               >
@@ -144,7 +144,7 @@ const Footer: FC = () => {
                   mb: 1.5, 
                   color: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)',
                   '&:hover': {
-                    color: '#d32f2f'
+                    color: theme.palette.primary.main
                   }
                 }}
               >
@@ -166,7 +166,7 @@ const Footer: FC = () => {
                   mb: 1.5, 
                   color: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)',
                   '&:hover': {
-                    color: '#d32f2f'
+                    color: theme.palette.primary.main
                   }
                 }}
               >
@@ -180,7 +180,7 @@ const Footer: FC = () => {
                   mb: 1.5, 
                   color: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)',
                   '&:hover': {
-                    color: '#d32f2f'
+                    color: theme.palette.primary.main
                   }
                 }}
               >
@@ -315,13 +315,13 @@ const Footer: FC = () => {
                 size="small"
                 startIcon={<SettingsIcon />}
                 onClick={handleSecretConfig}
-                sx={{ 
+                  sx={{ 
                   ml: 2,
                   borderColor: theme.palette.primary.main,
                   color: theme.palette.primary.main,
                   '&:hover': { 
-                    borderColor: '#5a1a1a',
-                    color: '#5a1a1a'
+                    borderColor: theme.palette.secondary.main,
+                    color: theme.palette.secondary.main
                   }
                 }}
               >
