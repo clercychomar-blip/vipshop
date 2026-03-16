@@ -69,8 +69,10 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
     return () => clearInterval(intervalId);
   }, []);
 
-  // Em desenvolvimento usa URL relativa para o proxy do Vite (/api → backend). Em produção usa VITE_API_URL ou mesmo origin.
-  const API_BASE_URL = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_URL || '');
+  // Helper: server API base (evitar URL vazia em produção para não receber HTML em vez de JSON)
+  const API_BASE_URL = import.meta.env.DEV
+    ? 'http://localhost:3000'
+    : (import.meta.env.VITE_API_URL?.trim() || (typeof window !== 'undefined' ? window.location.origin : ''));
 
   // Login function using Supabase-backed API
   const login = async (email: string, password: string, redirectPath?: string) => {
@@ -80,7 +82,17 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
       
       // Fetch user from server (Supabase-backed)
       const userResp = await fetch(`${API_BASE_URL}/api/users/email/${encodeURIComponent(email)}`);
-      const userData = userResp.ok ? await userResp.json() : null;
+      const contentType = userResp.headers.get('content-type') || '';
+      if (!userResp.ok) {
+        setError('Usuário não encontrado. Verifique suas credenciais.');
+        return;
+      }
+      if (!contentType.includes('application/json')) {
+        console.error('Login API returned non-JSON (got', contentType, '). Check VITE_API_URL - backend may be unreachable.');
+        setError('Serviço de login indisponível. Verifique se a API está configurada (VITE_API_URL).');
+        return;
+      }
+      const userData = await userResp.json();
       
       if (!userData) {
         setError('Usuário não encontrado. Verifique suas credenciais.');
@@ -157,7 +169,9 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(sessionPayload)
       });
-      const session = resp.ok ? await resp.json() : null;
+      const session = resp.ok && (resp.headers.get('content-type') || '').includes('application/json')
+        ? await resp.json()
+        : null;
       
       // Store session token in local storage
       localStorage.setItem('sessionToken', token);
@@ -240,7 +254,9 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
       
       // Get session from server (Supabase)
       const resp = await fetch(`${API_BASE_URL}/api/sessions/token/${encodeURIComponent(token)}`);
-      const session = resp.ok ? await resp.json() : null;
+      const session = resp.ok && (resp.headers.get('content-type') || '').includes('application/json')
+        ? await resp.json()
+        : null;
       
       if (!session) {
         console.log('No session found with this token');
@@ -301,7 +317,10 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
       // Fetch user data from server using the session's userId
       try {
         const userResp = await fetch(`${API_BASE_URL}/api/users/${encodeURIComponent(session.userId)}`);
-        const userData = userResp.ok ? await userResp.json() : null;
+        const ct = userResp.headers.get('content-type') || '';
+        const userData = userResp.ok && ct.includes('application/json')
+          ? await userResp.json()
+          : null;
         
         if (!userData) {
           // User not found, deactivate session

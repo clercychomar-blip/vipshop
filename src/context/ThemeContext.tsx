@@ -45,11 +45,11 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     setMode(prevMode => (prevMode === 'dark' ? 'light' : 'dark'));
   };
 
-  // Cores principais do checkout de ebooks
-  const ebookPrimaryBlue = '#0070ba';
-  const ebookPrimaryBlueDark = '#1546a0';
-  const ebookAccentCyan = '#4fc3f7';
-  const ebookAccentYellow = '#ffb300';
+  // Cores principais mais vivas para botões e destaques
+  const ebookPrimaryBlue = '#ff3366';
+  const ebookPrimaryBlueDark = '#e0004d';
+  const ebookAccentCyan = '#00e5ff';
+  const ebookAccentYellow = '#ffd600';
 
   // Create MUI theme based on mode, usando a paleta do checkout
   const theme = createTheme({

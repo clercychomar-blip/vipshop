@@ -366,7 +366,7 @@ const VideoList: FC = () => {
           mb: 3
         }}>
         <Box>
-          <Typography variant="h4" component="h1" gutterBottom>
+          <Typography variant="subtitle1" component="h1" gutterBottom sx={{ fontWeight: 600 }}>
             {siteConfig?.video_list_title || 'Available Videos'}
           </Typography>
           {!loading && loadedVideos.length > 0 && (

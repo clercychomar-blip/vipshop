@@ -399,86 +399,7 @@ Please let me know if you need any assistance accessing your content.`;
             >
               {videoListTitle || 'Featured Videos'}
             </Typography>
-            {!loading && videos.length > 0 && (
-              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mt: 1, alignItems: 'center' }}>
-                <Chip 
-                  label={`From $${Math.min(...videos.map(v => v.price)).toFixed(2)}`}
-                  size="small"
-                  sx={{ 
-                    backgroundColor: theme => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                    color: theme => theme.palette.text.primary,
-                    fontWeight: 'bold',
-                    border: theme => `1px solid ${theme.palette.divider}`
-                  }}
-                />
-                <Chip 
-                  label={`${sectionHappyCustomers}+ Happy Customers`}
-                  size="small"
-                  sx={{ 
-                    backgroundColor: theme => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                    color: theme => theme.palette.text.primary,
-                    fontWeight: 'bold',
-                    border: theme => `1px solid ${theme.palette.divider}`
-                  }}
-                />
-                <Chip 
-                  label={`${sectionRating}/5 Rating`}
-                  size="small"
-                  sx={{ 
-                    backgroundColor: theme => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                    color: theme => theme.palette.text.primary,
-                    fontWeight: 'bold',
-                    border: theme => `1px solid ${theme.palette.divider}`
-                  }}
-                />
-                <Chip 
-                  label={`${sectionOnlineNow} online`}
-                  size="small"
-                  sx={{ 
-                    backgroundColor: theme => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                    color: theme => theme.palette.text.primary,
-                    fontWeight: 'bold',
-                    border: theme => `1px solid ${theme.palette.divider}`
-                  }}
-                  icon={<span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', display: 'inline-block', boxShadow: '0 0 0 2px rgba(34,197,94,0.25)' }} />}
-                />
-                <Chip 
-                  label={`Up to $${Math.max(...videos.map(v => v.price)).toFixed(2)}`}
-                  size="small"
-                  sx={{ 
-                    backgroundColor: theme => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                    color: theme => theme.palette.text.primary,
-                    fontWeight: 'bold',
-                    border: theme => `1px solid ${theme.palette.divider}`
-                  }}
-                />
-                <Chip 
-                  label={`Avg: $${(videos.reduce((sum, v) => sum + v.price, 0) / videos.length).toFixed(2)}`}
-                  size="small"
-                  sx={{ 
-                    backgroundColor: theme => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                    color: theme => theme.palette.text.primary,
-                    fontWeight: 'bold',
-                    border: theme => `1px solid ${theme.palette.divider}`
-                  }}
-                />
-                
-                {/* Loading progress indicator */}
-                {isLoadingMore && loadedVideos.length < videos.length && (
-                  <Chip 
-                    label={`Loading ${loadedVideos.length}/${videos.length} videos...`}
-                    size="small"
-                    sx={{ 
-                      backgroundColor: 'rgba(33, 150, 243, 0.1)',
-                      color: '#2196F3',
-                      fontWeight: 'bold',
-                      border: '1px solid rgba(33, 150, 243, 0.3)',
-                      animation: 'pulse 1.5s ease-in-out infinite'
-                    }}
-                  />
-                )}
-              </Box>
-            )}
+            {!loading && videos.length > 0 && null}
           </Box>
           
           <Box sx={{ 
@@ -509,8 +430,8 @@ Please let me know if you need any assistance accessing your content.`;
             <Button 
               component={RouterLink}
               to="/videos"
-              variant="outlined"
-              color="primary"
+              variant="contained"
+              color="secondary"
               endIcon={<ArrowForwardIcon />}
             >
               View All Videos

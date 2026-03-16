@@ -370,7 +370,7 @@ I'm sending the payment from my wallet. Please confirm the transaction and provi
           display: 'flex', 
           flexDirection: 'column',
           transition: 'transform 0.25s ease, box-shadow 0.25s ease',
-          borderRadius: 18,
+          borderRadius: 15,
           overflow: 'hidden',
           position: 'relative',
           boxShadow: theme =>

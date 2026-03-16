@@ -128,33 +128,33 @@ async function initializeDataFiles() {
   }
 }
 
-// Health check
+// API primeiro (antes de static/catch-all) para evitar /api/* devolver index.html
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'OK',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
     port: PORT
   });
 });
-
-// Usar as rotas da API (SEMPRE antes do static/catch-all)
 app.use('/api', apiRoutes);
 
-// Qualquer rota /api/* não reconhecida pelo router devolve 404 JSON (nunca HTML)
-app.use('/api', (req, res) => {
-  res.status(404).json({ error: `API endpoint not found: ${req.method} ${req.originalUrl}` });
-});
-
-// Servir o frontend React (static + SPA fallback)
+// Depois: servir estáticos e SPA fallback
 app.use(express.static(path.join(__dirname, 'dist')));
-app.get('*', (req, res) => {
-  // Segurança extra: nunca devolver index.html para chamadas /api/
-  if (req.path.startsWith('/api/')) {
-    return res.status(404).json({ error: 'API endpoint not found' });
-  }
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-});
+if (process.env.NODE_ENV === 'production') {
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+  });
+} else {
+  // Em desenvolvimento, redirecionar para o servidor do Vite (exceto para rotas da API)
+  app.get('*', (req, res) => {
+    if (req.path.startsWith('/api/')) {
+      res.status(404).json({ error: 'API endpoint not found' });
+    } else {
+      res.redirect('http://localhost:5173' + req.originalUrl);
+    }
+  });
+}
 
 // Inicializar e iniciar servidor
 async function startServer() {
